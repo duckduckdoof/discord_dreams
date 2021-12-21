@@ -8,7 +8,7 @@ load_dotenv()
 bot_token = dict( os.environ )['DISCORD_BOT_TOKEN']
 
 # Make the bot
-bot = commands.Bot( command_prefix='!' )
+bot = commands.Bot( command_prefix='m!' )
 
 @bot.event
 async def on_ready():
