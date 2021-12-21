@@ -1,6 +1,13 @@
+import os
 import discord
 from discord.ext import commands
+from dotenv import load_dotenv
 
+# Load bot token from environment file
+load_dotenv()
+bot_token = dict( os.environ )['DISCORD_BOT_TOKEN']
+
+# Make the bot
 bot = commands.Bot( command_prefix='!' )
 
 @bot.event
@@ -11,4 +18,4 @@ async def on_ready():
 async def hello( ctx ):
     await ctx.send( "Hello!" )
 
-bot.run( '' )
+bot.run( bot_token )
