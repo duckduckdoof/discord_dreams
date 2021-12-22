@@ -39,23 +39,6 @@ client = discord.Client( intents=intents )
 bot = commands.Bot( command_prefix="m!", intents=intents,
                    description='Relatively simple music bot' )
 
-@bot.command( name='join', help='Join the channel which the invoking user is in')
-async def join( ctx ):
-    if not ctx.message.author.voice:
-        await ctx.send( "{} is not connected to a voice channel".format(ctx.message.author.name) )
-        return
-    else:
-        channel = ctx.message.author.voice.channel
-    await channel.connect()
-
-@bot.command( name='leave', help='Leave the voice channel (if applicable)' )
-async def leave( ctx ):
-    voice_client = ctx.message.guild.voice_client
-    if voice_client.is_connected():
-        await voice_client.disconnect()
-    else:
-        await ctx.send( "The bot is not connected to a voice channel." )
-
 @bot.command( name='play', help='Plays a video/song on Youtube' )
 async def play( ctx, url ):
     if url == None or url == "":
@@ -66,9 +49,27 @@ async def play( ctx, url ):
         voice_channel = server.voice_client
 
         async with ctx.typing():
-            print( "Retrieving video..." )
+            print( "Retrieving audio..." )
             filename = await class_utils.YTDLSource.from_url( url, ytdl, ffmpeg_options, loop=bot.loop )
-            print( "Playing video..." )
+            print( "Playing audio..." )
+            voice_channel.play( discord.FFmpegPCMAudio( source=filename ) )
+        await ctx.send( 'Now playing: {}'.format(filename) )
+    except:
+        await ctx.send( "The bot is not currently connected to a voice channel" )
+
+@bot.command( name='stream', help='Streams a video/song on Youtube' )
+async def stream( ctx, url ):
+    if url == None or url == "":
+        await ctx.send( "Please provide a valid Youtube URL" )
+        return
+    try:
+        server = ctx.message.guild
+        voice_channel = server.voice_client
+
+        async with ctx.typing():
+            print( "Retrieving audio stream..." )
+            filename = await class_utils.YTDLSource.from_url( url, ytdl, ffmpeg_options, loop=bot.loop, stream=True )
+            print( "Playing audio stream..." )
             voice_channel.play( discord.FFmpegPCMAudio( source=filename ) )
         await ctx.send( 'Now playing: {}'.format(filename) )
     except:
@@ -97,6 +98,36 @@ async def stop(ctx):
         voice_client.stop()
     else:
         await ctx.send( "The bot is not playing anything at the moment." )
+
+@bot.command( name='join', help='Join the channel which the invoking user is in')
+async def join( ctx ):
+    if not ctx.message.author.voice:
+        await ctx.send( "{} is not connected to a voice channel".format(ctx.message.author.name) )
+        return
+    else:
+        channel = ctx.message.author.voice.channel
+    await channel.connect()
+
+@bot.command( name='leave', help='Leave the voice channel (if applicable)' )
+async def leave( ctx ):
+    voice_client = ctx.message.guild.voice_client
+    if voice_client.is_connected():
+        await voice_client.disconnect()
+    else:
+        await ctx.send( "The bot is not connected to a voice channel." )
+
+@play.before_invoke
+@stream.before_invoke
+async def ensure_voice( ctx ):
+    print( "Ensuring bot is in voice channel" )
+    if ctx.voice_client is None:
+        if ctx.message.author.voice:
+            await ctx.message.author.voice.channel.connect()
+        else:
+            await ctx.send( "You are not connected to a voice channel." )
+            raise commands.CommandError( "Author not connected to a voice channel." )
+    elif ctx.voice_client.is_playing():
+        ctx.voice_client.stop()
 
 @bot.event
 async def on_ready():
