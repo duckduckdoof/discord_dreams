@@ -39,7 +39,11 @@ client = discord.Client( intents=intents )
 bot = commands.Bot( command_prefix="m!", intents=intents,
                    description='Relatively simple music bot' )
 
-@bot.command( name='play', help='Plays a video/song on Youtube' )
+#---------------------------
+# NOTE: the below command downloads the entire video before playing; streaming seems to be better
+#---------------------------
+
+@bot.command( name='play_old', help='Plays a video/song on Youtube' )
 async def play( ctx, url ):
     if url == None or url == "":
         await ctx.send( "Please provide a valid Youtube URL" )
@@ -53,11 +57,12 @@ async def play( ctx, url ):
             filename = await class_utils.YTDLSource.from_url( url, ytdl, ffmpeg_options, loop=bot.loop )
             print( "Playing audio..." )
             voice_channel.play( discord.FFmpegPCMAudio( source=filename ) )
-        await ctx.send( 'Now playing: {}'.format(filename) )
     except:
         await ctx.send( "The bot is not currently connected to a voice channel" )
 
-@bot.command( name='stream', help='Streams a video/song on Youtube' )
+#---------------------------
+
+@bot.command( name='play', help='Streams a video/song on Youtube' )
 async def stream( ctx, url ):
     if url == None or url == "":
         await ctx.send( "Please provide a valid Youtube URL" )
@@ -71,7 +76,6 @@ async def stream( ctx, url ):
             filename = await class_utils.YTDLSource.from_url( url, ytdl, ffmpeg_options, loop=bot.loop, stream=True )
             print( "Playing audio stream..." )
             voice_channel.play( discord.FFmpegPCMAudio( source=filename ) )
-        await ctx.send( 'Now playing: {}'.format(filename) )
     except:
         await ctx.send( "The bot is not currently connected to a voice channel" )
 
