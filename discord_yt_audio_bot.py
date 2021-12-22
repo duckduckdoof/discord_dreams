@@ -58,6 +58,9 @@ async def leave( ctx ):
 
 @bot.command( name='play', help='Plays a video/song on Youtube' )
 async def play( ctx, url ):
+    if url == None or url == "":
+        await ctx.send( "Please provide a valid Youtube URL" )
+        return
     try:
         server = ctx.message.guild
         voice_channel = server.voice_client
