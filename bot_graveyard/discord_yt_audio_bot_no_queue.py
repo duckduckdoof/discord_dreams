@@ -1,9 +1,9 @@
 #----------------------------------------------------------------------------------------------------------------------#
 #
-# discord_yt_audio_bot_with_queue.py
+# discord_yt_audio_bot.py
 #
-# This bot is the same as 'discord_yt_audio_bot.py', with added functionality for queueing songs
-# and other queueing-based logic and features.
+# This file creates the discord bot, adds appropriate YoutubeDL functionality, and activates it for use.
+# Credit goes to https://github.com/Rapptz/discord.py/blob/master/examples/basic_voice.py for basic functionality.
 #
 # Author: duckduckdoof
 #
