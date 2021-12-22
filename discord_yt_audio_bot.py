@@ -1,8 +1,8 @@
 #----------------------------------------------------------------------------------------------------------------------#
 #
-# discord_yt_audio_bot_with_queue.py
+# discord_yt_audio_bot.py
 #
-# This bot is the same as 'discord_yt_audio_bot.py', with added functionality for queueing songs
+# This bot is a basic YT player with added functionality for queueing songs
 # and other queueing-based logic and features.
 #
 # Author: duckduckdoof
