@@ -1,3 +1,4 @@
 # Make sure to ignore the following
 
 .env
+__pycache__/

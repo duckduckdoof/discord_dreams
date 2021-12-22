@@ -16,7 +16,7 @@ import youtube_dl
 
 #-[ CONSTANT DEFS ]----------------------------------------------------------------------------------------------------#
 
-CONFIG_DIR          = "./configs/"
+CONFIG_DIR          = "configs/"
 YT_DL_CONFIG_FILE   = CONFIG_DIR + "youtube_dl_format.json"
 FFMPEG_CONFIG_FILE  = CONFIG_DIR + "ffmpeg_options.json"
 
