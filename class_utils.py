@@ -33,8 +33,6 @@ class YTDLSource( discord.PCMVolumeTransformer ):
         loop = loop or asyncio.get_event_loop()
         data = await loop.run_in_executor( None, lambda: ytdl.extract_info( url, download=not stream ) )
 
-        print( str(data) )
-
         if 'entries' in data:
             # take first item from a playlist
             data = data['entries'][0]
