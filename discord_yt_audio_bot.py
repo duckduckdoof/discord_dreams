@@ -91,7 +91,7 @@ async def play_next( ctx ):
             print( "Retrieving audio stream..." )
             filename = await class_utils.YTDLSource.from_url( url, ytdl, ffmpeg_options, loop=bot.loop, stream=True )
             print( "Playing audio stream..." )
-            voice_channel.play( discord.FFmpegPCMAudio( source=filename ), after= lambda: play_next( ctx ) )
+            voice_channel.play( discord.FFmpegPCMAudio( source=filename ), after= lambda: await play_next( ctx ) )
     except:
         await ctx.send( "The bot is not currently connected to a voice channel" )
 
@@ -110,7 +110,7 @@ async def stream( ctx, url ):
 
     # Add the song to the queue, and play_next()
     yt_queue.put( url )
-    play_next( ctx )
+    await play_next( ctx )
 
 @bot.command( name='queue', help='Queues a YT URL for playing' )
 async def queue( ctx, url ):
