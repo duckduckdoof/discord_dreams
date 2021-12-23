@@ -126,7 +126,7 @@ async def queue( ctx, url ):
 
     # Sanity check the URL
     # SEE ABOVE FUNCTION (stream) on note for better URL check
-    filename = await get_filename_from_url( ctx, url )
+    filename = await get_yt_filename_from_url( ctx, url )
     print( "Queueing video..." )
     yt_queue.put( filename )
 
