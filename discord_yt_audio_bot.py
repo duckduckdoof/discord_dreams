@@ -22,7 +22,7 @@ from discord.ext import commands
 
 #-[ CONST DEFS ]-----------------------------------------------------------------------------------------------------#
 
-MAX_QUEUE_SIZE = 100
+MAX_QUEUE_SIZE = 15
 
 #-[ INIT DEFS ]------------------------------------------------------------------------------------------------------#
 
@@ -85,12 +85,14 @@ def play_next( ctx ):
     try:
         server = ctx.message.guild
         voice_channel = server.voice_client
-        filename = yt_queue.get()
+        audio_src = yt_queue.get()
 
-        print( "Playing audio stream..." )
-        voice_channel.play( discord.FFmpegPCMAudio( source=filename ), after=play_next( ctx ) )
-    except:
+        print( "Playing stream..." )
+        voice_channel.play( audio_src, after=lambda ctx: play_next( ctx ) )
+        print( "Finished playing stream..." )
+    except Exception as e:
         print( "Error passing context to play_next()" )
+        print( e )
 
 """
 Obtains appropriate file object to play video from a given URL
@@ -100,8 +102,9 @@ async def get_yt_filename_from_url( ctx, url: str ):
         async with ctx.typing():
             print( "Youtube video requested by " + ctx.message.author.display_name )
             print( "URL: " + url )
-            print( "Retrieving audio stream..." )
+            print( "Retrieving stream..." )
             filename = await class_utils.YTDLSource.from_url( url, ytdl, ffmpeg_options, loop=bot.loop, stream=True )
+            return filename
     except:
         await ctx.send( "The bot is not currently connected to a voice channel" )
 
@@ -127,8 +130,9 @@ async def queue( ctx, url ):
     # Sanity check the URL
     # SEE ABOVE FUNCTION (stream) on note for better URL check
     filename = await get_yt_filename_from_url( ctx, url )
+    audio_src = discord.FFmpegPCMAudio( source=filename )
     print( "Queueing video..." )
-    yt_queue.put( filename )
+    yt_queue.put( audio_src )
 
     # Play the next song
     play_next( ctx )
