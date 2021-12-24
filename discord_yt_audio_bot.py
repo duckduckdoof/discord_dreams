@@ -91,8 +91,8 @@ async def get_yt_obj_from_url( ctx, url: str ):
         print( "Youtube video requested by " + ctx.message.author.display_name )
         print( "URL: " + url )
         print( "Retrieving stream..." )
-        yt_obj = await ytdl_utils.YTDLSource.stream_from_url( url, ytdl )
-        return yt_obj
+        yt_objects = await ytdl_utils.YTDLSource.stream_from_url( url, ytdl )
+        return yt_objects
     except:
         await ctx.send( "The bot is not currently connected to a voice channel" )
 
@@ -108,9 +108,10 @@ async def queue( ctx, url ):
         await ctx.send( "Please provide a valid Youtube URL" )
         return
     try:
-        yt_obj = await get_yt_obj_from_url( ctx, url )
-        print( "Queueing video..." )
-        yt_queue.put( yt_obj )
+        yt_objects = await get_yt_obj_from_url( ctx, url )
+        print( "Queueing video(s)..." )
+        for yt_obj in yt_objects:
+            yt_queue.put( yt_obj )
 
         # Start the player if we're not currently playing anything
         if not (ctx.voice_client.is_playing() or ctx.voice_client.is_paused()):

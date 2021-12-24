@@ -57,13 +57,18 @@ class YTDLSource( discord.PCMVolumeTransformer ):
     ## Streams the youtube audio from a URL
     @classmethod
     async def stream_from_url( cls, url, ytdl, loop=None ):
+        entries = []
         loop = loop or asyncio.get_event_loop()
         data = await loop.run_in_executor( None, lambda: ytdl.extract_info( url, download=False ) )
 
         if 'entries' in data:
             # take first item from a playlist
-            data = data['entries'][0]
+            print( "Found multiple entries (it's a playlist)!" )
+            for video in data['entries']:
+                entries.append( YTStreamData( video ) )
+        else:
+            entries = [ YTStreamData( data ) ]
 
-        return YTStreamData( data )
+        return entries
 
 #-[ END ]--------------------------------------------------------------------------------------------------------------#
