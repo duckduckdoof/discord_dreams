@@ -19,6 +19,7 @@ import discord
 
 from dotenv import load_dotenv
 from discord.ext import commands
+from prettytable import PrettyTable
 
 #-[ CONST DEFS ]-----------------------------------------------------------------------------------------------------#
 
@@ -107,7 +108,8 @@ async def queue( ctx, url ):
         yt_queue.put( yt_obj )
 
         # Start the player if we're not currently playing anything
-        play_next( ctx )
+        if not (ctx.voice_client.is_playing() or ctx.voice_client.is_paused()):
+            play_next( ctx )
     except Exception as e:
         await ctx.send( "Error found while queueing music..." )
         print( e )
@@ -121,11 +123,12 @@ async def list_queue( ctx ):
     if yt_queue.empty():
         await ctx.send( "Queue is empty" )
     else:
+        queue_table = PrettyTable()
+        queue_table.field_names = [ '', 'Queue' ]
         music_list = list( yt_queue.queue )
-        out_str = ""
         for i, music in enumerate(music_list):
-            out_str += str(i) + ": " + music.title + "\n"
-        await ctx.send( out_str )
+            queue_table.add_row( [ "Up Next >>>" if i == 0 else "", music.title ] )
+        await ctx.send( '`' + queue_table.get_string() + '`' )
 
 """
 Makes the bot stop the current song, and queues the next song
@@ -161,7 +164,7 @@ async def resume( ctx ):
         print( "Resuming..." )
         voice_client.resume()
     else:
-        await ctx.send( "The bot was not playing anything before this. Use play command" )
+        await ctx.send( "The bot was not playing anything before this. Use 'q' command" )
 
 """
 Makes the bot stop the current song, and clears the queue
@@ -196,6 +199,9 @@ Manual command for making the bot leave the channel.
 async def leave( ctx ):
     voice_client = ctx.message.guild.voice_client
     if voice_client.is_connected():
+        with yt_queue.mutex:
+            yt_queue.queue.clear()
+        voice_client.stop()
         await voice_client.disconnect()
     else:
         await ctx.send( "The bot is not connected to a voice channel." )
