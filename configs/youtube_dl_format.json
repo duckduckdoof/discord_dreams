@@ -8,6 +8,7 @@
     "ignoreerrors": false,
     "logtostderr": false,
     "quiet": true,
+    "flat_playlist": true,
     "no_warnings": true,
     "default_search": "auto",
     "force_ipv4": true,
