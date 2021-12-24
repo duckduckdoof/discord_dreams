@@ -14,7 +14,7 @@
 import os
 import queue
 import config_utils
-import class_utils
+import ytdl_utils
 import discord
 
 from dotenv import load_dotenv
@@ -40,6 +40,7 @@ client = discord.Client( intents=intents )
 
 # Set up queue for multiple YT vids
 yt_queue = queue.Queue( maxsize=MAX_QUEUE_SIZE )
+now_playing = None
 
 #-[ BOT DEFS ]---------------------------------------------------------------------------------------------------------#
 
@@ -47,37 +48,15 @@ yt_queue = queue.Queue( maxsize=MAX_QUEUE_SIZE )
 bot = commands.Bot( command_prefix="m!", intents=intents,
                    description='Relatively simple music bot' )
 
-#---------------------------
-# NOTE: the below command downloads the entire video before playing; streaming seems to be better
-#---------------------------
-
-# @bot.command( name='play_old', help='Plays a video/song on Youtube' )
-# async def play( ctx, url ):
-#     if url == None or url == "":
-#         await ctx.send( "Please provide a valid Youtube URL" )
-#         return
-#     try:
-#         server = ctx.message.guild
-#         voice_channel = server.voice_client
-# 
-#         async with ctx.typing():
-#             print( "Retrieving audio..." )
-#             filename = await class_utils.YTDLSource.from_url( url, ytdl, ffmpeg_options, loop=bot.loop )
-#             print( "Playing audio..." )
-#             voice_channel.play( discord.FFmpegPCMAudio( source=filename ) )
-#     except:
-#         await ctx.send( "The bot is not currently connected to a voice channel" )
-
-#---------------------------
-
 """
 Plays the next song on the queue.
 This is invoked by the 'after' function for voice_channel.play()
 """
 def play_next( ctx ):
 
-    # First, check the queue
+    # Check the queue
     if yt_queue.empty():
+        now_playing = None
         print( "Queue is empty" )
         return
 
@@ -85,11 +64,10 @@ def play_next( ctx ):
     try:
         server = ctx.message.guild
         voice_channel = server.voice_client
-        audio_src = yt_queue.get()
+        now_playing = yt_queue.get()
 
         print( "Playing stream..." )
-        voice_channel.play( audio_src, after=lambda ctx: play_next( ctx ) )
-        print( "Finished playing stream..." )
+        voice_channel.play( discord.FFmpegPCMAudio( source=now_playing.url, **ffmpeg_options ), after=lambda ctx: play_next( ctx ) )
     except Exception as e:
         print( "Error passing context to play_next()" )
         print( e )
@@ -97,45 +75,39 @@ def play_next( ctx ):
 """
 Obtains appropriate file object to play video from a given URL
 """
-async def get_yt_filename_from_url( ctx, url: str ):
+async def get_yt_obj_from_url( ctx, url: str ):
     try:
         async with ctx.typing():
             print( "Youtube video requested by " + ctx.message.author.display_name )
             print( "URL: " + url )
             print( "Retrieving stream..." )
-            filename = await class_utils.YTDLSource.from_url( url, ytdl, ffmpeg_options, loop=bot.loop, stream=True )
-            return filename
+            yt_obj = await ytdl_utils.YTDLSource.stream_from_url( url, ytdl )
+            return yt_obj
     except:
         await ctx.send( "The bot is not currently connected to a voice channel" )
 
 """
-Your basic 'play' button.
-Plays the YT video from the provided URL in the message.
-"""
-@bot.command( name='play', help='Streams a video/song on Youtube' )
-async def stream( ctx, url ):
-
-    # Sanity check those URLs
-    # TODO: a more robust URL checker could prove useful here...
-    if url == None or url == "":
-        await ctx.send( "Please provide a valid Youtube URL" )
-        return
-
-"""
 Adds a song the queue, and plays the first song.
 """
-@bot.command( name='queue', help='Queues a YT URL for playing' )
+@bot.command( name='q', help='Queues a YT URL for playing' )
 async def queue( ctx, url ):
 
     # Sanity check the URL
     # SEE ABOVE FUNCTION (stream) on note for better URL check
-    filename = await get_yt_filename_from_url( ctx, url )
-    audio_src = discord.FFmpegPCMAudio( source=filename )
-    print( "Queueing video..." )
-    yt_queue.put( audio_src )
+    if url == None or url == "":
+        await ctx.send( "Please provide a valid Youtube URL" )
+        return
+    try:
+        yt_obj = await get_yt_obj_from_url( ctx, url )
+        print( "Queueing video..." )
+        yt_queue.put( yt_obj )
 
-    # Play the next song
-    play_next( ctx )
+        # Start the player if we're not currently playing anything
+        if now_playing == None:
+            play_next( ctx )
+
+    except:
+        await ctx.send( "User must be connected to a voice channel" )
 
 """
 Pauses the bot voice client.
@@ -144,6 +116,7 @@ Pauses the bot voice client.
 async def pause( ctx ):
     voice_client = ctx.message.guild.voice_client
     if voice_client.is_playing():
+        print( "Pausing..." )
         voice_client.pause()
     else:
         await ctx.send( "The bot is not playing anything at the moment." )
@@ -155,6 +128,7 @@ Resumes the bot voice client (if applicable).
 async def resume( ctx ):
     voice_client = ctx.message.guild.voice_client
     if voice_client.is_paused():
+        print( "Resuming..." )
         voice_client.resume()
     else:
         await ctx.send( "The bot was not playing anything before this. Use play command" )
@@ -166,6 +140,7 @@ Makes the bot stop playing the song.
 async def stop( ctx ):
     voice_client = ctx.message.guild.voice_client
     if voice_client.is_playing():
+        print( "Stopping..." )
         voice_client.stop()
     else:
         await ctx.send( "The bot is not playing anything at the moment." )
@@ -197,7 +172,6 @@ async def leave( ctx ):
 Ensures that, if a user is in a voice channel, the bot
 will first ensure that it joins the corresponding channel before playing.
 """
-@stream.before_invoke
 @queue.before_invoke
 async def ensure_voice( ctx ):
     print( "Ensuring bot is in voice channel" )
