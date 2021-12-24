@@ -1,8 +1,8 @@
 #----------------------------------------------------------------------------------------------------------------------#
 #
-# class_utils.py
+# ytdl_utils.py
 #
-# This file contains all class declarations for the discord music bot.
+# This file contains Youtube download class utilities for the discord music bot.
 # Credit goes to https://github.com/Rapptz/discord.py/blob/master/examples/basic_voice.py for basic functionality.
 #
 # Author: duckduckdoof
@@ -16,7 +16,21 @@ import discord
 
 #-[ CLASS DEFS ]-------------------------------------------------------------------------------------------------------#
 
-"""Retrieves audio data from youtube URL"""
+"""
+Class containing basic information of a YT video
+"""
+class YTStreamData:
+    
+    ## Constructor
+    def __init__( self, yt_raw_data ):
+        self.url = yt_raw_data['url']
+        self.title = yt_raw_data['title']
+        self.id = yt_raw_data['id']
+        self.description = yt_raw_data['description']
+
+"""
+Retrieves audio data from youtube URL
+"""
 class YTDLSource( discord.PCMVolumeTransformer ):
 
     ## Constructor
@@ -29,18 +43,27 @@ class YTDLSource( discord.PCMVolumeTransformer ):
 
     ## Downloads the youtube audio from a URL
     @classmethod
-    async def from_url( cls, url, ytdl, ffmpeg_options, loop=None, stream=False ):
+    async def download_from_url( cls, url, ytdl, loop=None ):
         loop = loop or asyncio.get_event_loop()
-        data = await loop.run_in_executor( None, lambda: ytdl.extract_info( url, download=not stream ) )
-
-        print( str(data) )
+        data = await loop.run_in_executor( None, lambda: ytdl.extract_info( url, download=True ) )
 
         if 'entries' in data:
             # take first item from a playlist
             data = data['entries'][0]
-            print( data )
 
-        filename = data[ 'url' ] if stream else ytdl.prepare_filename( data )
+        filename = ytdl.prepare_filename( data )
         return filename
+
+    ## Streams the youtube audio from a URL
+    @classmethod
+    async def stream_from_url( cls, url, ytdl, loop=None ):
+        loop = loop or asyncio.get_event_loop()
+        data = await loop.run_in_executor( None, lambda: ytdl.extract_info( url, download=False ) )
+
+        if 'entries' in data:
+            # take first item from a playlist
+            data = data['entries'][0]
+
+        return YTStreamData( data )
 
 #-[ END ]--------------------------------------------------------------------------------------------------------------#
