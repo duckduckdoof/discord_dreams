@@ -42,6 +42,7 @@ client = discord.Client( intents=intents )
 # Set up queue for multiple YT vids
 yt_queue = queue.Queue( maxsize=MAX_QUEUE_SIZE )
 loop_queue = False
+now_playing = ""
 
 #-[ BOT DEFS ]---------------------------------------------------------------------------------------------------------#
 
@@ -55,9 +56,12 @@ This is invoked by the 'after' function for voice_channel.play()
 """
 def play_next( ctx ):
 
+    global now_playing
+
     # Check the queue
     if yt_queue.empty():
         print( "Queue is empty..." )
+        now_playing = ""
         return
 
     # If we're already playing something, wait for the lambda function to trigger the next song
@@ -70,6 +74,8 @@ def play_next( ctx ):
         server = ctx.message.guild
         voice_channel = server.voice_client
         yt_obj = yt_queue.get()
+        print( "Testing: " + str(yt_obj.title) )
+        now_playing = yt_obj.title
 
         # LOOPING: if enabled, put that object back onto the queue
         if loop_queue:
@@ -91,8 +97,8 @@ async def get_yt_obj_from_url( ctx, url: str ):
         print( "Youtube video requested by " + ctx.message.author.display_name )
         print( "URL: " + url )
         print( "Retrieving stream..." )
-        yt_obj = await ytdl_utils.YTDLSource.stream_from_url( url, ytdl )
-        return yt_obj
+        yt_objects = await ytdl_utils.YTDLSource.stream_from_url( url, ytdl )
+        return yt_objects
     except:
         await ctx.send( "The bot is not currently connected to a voice channel" )
 
@@ -108,9 +114,10 @@ async def queue( ctx, url ):
         await ctx.send( "Please provide a valid Youtube URL" )
         return
     try:
-        yt_obj = await get_yt_obj_from_url( ctx, url )
-        print( "Queueing video..." )
-        yt_queue.put( yt_obj )
+        yt_objects = await get_yt_obj_from_url( ctx, url )
+        print( "Queueing video(s)..." )
+        for yt_obj in yt_objects:
+            yt_queue.put( yt_obj )
 
         # Start the player if we're not currently playing anything
         if not (ctx.voice_client.is_playing() or ctx.voice_client.is_paused()):
@@ -125,20 +132,29 @@ TODO: it may be a good idea to list who queued the song as well...
 """
 @bot.command( name='list', help='List videos in the queue' )
 async def list_queue( ctx ):
+    global now_playing 
+    if now_playing == "":
+        now_playing = "Nothing"
+    current_str = '`' + "Now Playing: " + str(now_playing) + '`' + '\n\n'
+
+    # Assemble print strings
     if yt_queue.empty():
-        await ctx.send( "Queue is empty" )
+        table_str = "`Queue is empty`" 
     else:
         queue_table = PrettyTable()
         queue_table.field_names = [ '', 'Queue' ]
         music_list = list( yt_queue.queue )
         for i, music in enumerate(music_list):
             queue_table.add_row( [ "Up Next >>>" if i == 0 else "", music.title ] )
-        await ctx.send( '`' + queue_table.get_string() + '`' )
+        table_str = '`' + queue_table.get_string() + '`'
+
+    # Print out the strings
+    await ctx.send( current_str + table_str )
 
 """
 Makes the bot stop the current song, and queues the next song
 """
-@bot.command( name='next', help='Stops the video/song' )
+@bot.command( name='next', help='Queues the next song' )
 async def next( ctx ):
     voice_client = ctx.message.guild.voice_client
     if voice_client.is_playing() or voice_client.is_paused():
