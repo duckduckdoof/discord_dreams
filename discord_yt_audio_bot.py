@@ -40,7 +40,6 @@ client = discord.Client( intents=intents )
 
 # Set up queue for multiple YT vids
 yt_queue = queue.Queue( maxsize=MAX_QUEUE_SIZE )
-now_playing = None
 
 #-[ BOT DEFS ]---------------------------------------------------------------------------------------------------------#
 
@@ -56,18 +55,22 @@ def play_next( ctx ):
 
     # Check the queue
     if yt_queue.empty():
-        now_playing = None
-        print( "Queue is empty" )
+        print( "Queue is empty..." )
+        return
+
+    # If we're already playing something, wait for the lambda function to trigger the next song
+    if ctx.voice_client.is_playing():
+        print( "Currently playing, waiting for turn..." )
         return
 
     # Obtain the appropriate voice channel, then stream the video
     try:
         server = ctx.message.guild
         voice_channel = server.voice_client
-        now_playing = yt_queue.get()
+        yt_obj = yt_queue.get()
 
         print( "Playing stream..." )
-        voice_channel.play( discord.FFmpegPCMAudio( source=now_playing.url, **ffmpeg_options ), after=lambda ctx: play_next( ctx ) )
+        voice_channel.play( discord.FFmpegPCMAudio( source=yt_obj.url, **ffmpeg_options ), after=lambda x: play_next( ctx ) )
     except Exception as e:
         print( "Error passing context to play_next()" )
         print( e )
@@ -103,8 +106,7 @@ async def queue( ctx, url ):
         yt_queue.put( yt_obj )
 
         # Start the player if we're not currently playing anything
-        if now_playing == None:
-            play_next( ctx )
+        play_next( ctx )
 
     except:
         await ctx.send( "User must be connected to a voice channel" )
@@ -181,8 +183,6 @@ async def ensure_voice( ctx ):
         else:
             await ctx.send( "You are not connected to a voice channel." )
             raise commands.CommandError( "Author not connected to a voice channel." )
-    elif ctx.voice_client.is_playing():
-        ctx.voice_client.stop()
 
 """
 When the bot is ready, log basic info.
