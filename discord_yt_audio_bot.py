@@ -22,7 +22,7 @@ from discord.ext import commands
 
 #-[ CONST DEFS ]-----------------------------------------------------------------------------------------------------#
 
-MAX_QUEUE_SIZE = 15
+MAX_QUEUE_SIZE = 20
 
 #-[ INIT DEFS ]------------------------------------------------------------------------------------------------------#
 
@@ -80,12 +80,13 @@ Obtains appropriate file object to play video from a given URL
 """
 async def get_yt_obj_from_url( ctx, url: str ):
     try:
-        async with ctx.typing():
-            print( "Youtube video requested by " + ctx.message.author.display_name )
-            print( "URL: " + url )
-            print( "Retrieving stream..." )
-            yt_obj = await ytdl_utils.YTDLSource.stream_from_url( url, ytdl )
-            return yt_obj
+        # Left this line here, could be useful but I haven't seen immediate changes without it
+        # async with ctx.typing():
+        print( "Youtube video requested by " + ctx.message.author.display_name )
+        print( "URL: " + url )
+        print( "Retrieving stream..." )
+        yt_obj = await ytdl_utils.YTDLSource.stream_from_url( url, ytdl )
+        return yt_obj
     except:
         await ctx.send( "The bot is not currently connected to a voice channel" )
 
@@ -107,9 +108,36 @@ async def queue( ctx, url ):
 
         # Start the player if we're not currently playing anything
         play_next( ctx )
+    except Exception as e:
+        await ctx.send( "Error found while queueing music..." )
+        print( e )
 
-    except:
-        await ctx.send( "User must be connected to a voice channel" )
+"""
+Takes all songs in the music queue, and prints them out in order
+TODO: it may be a good idea to list who queued the song as well...
+"""
+@bot.command( name='l', help='List videos in the queue' )
+async def list_queue( ctx ):
+    if yt_queue.empty():
+        await ctx.send( "Queue is empty" )
+    else:
+        music_list = list( yt_queue.queue )
+        out_str = ""
+        for i, music in enumerate(music_list):
+            out_str += str(i) + ": " + music.title + "\n"
+        await ctx.send( out_str )
+
+"""
+Makes the bot stop the current song, and queues the next song
+"""
+@bot.command( name='n', help='Stops the video/song' )
+async def next( ctx ):
+    voice_client = ctx.message.guild.voice_client
+    if voice_client.is_playing() or voice_client.is_paused():
+        print( "Skipping current song..." )
+        voice_client.stop()
+    else:
+        await ctx.send( "The bot is not playing anything at the moment." )
 
 """
 Pauses the bot voice client.
@@ -136,13 +164,15 @@ async def resume( ctx ):
         await ctx.send( "The bot was not playing anything before this. Use play command" )
 
 """
-Makes the bot stop playing the song.
+Makes the bot stop the current song, and clears the queue
 """
-@bot.command( name='stop', help='Stops the video/song' )
-async def stop( ctx ):
+@bot.command( name='clear', help='Stops the video/song' )
+async def clear( ctx ):
     voice_client = ctx.message.guild.voice_client
     if voice_client.is_playing():
         print( "Stopping..." )
+        with yt_queue.mutex:
+            yt_queue.queue.clear()
         voice_client.stop()
     else:
         await ctx.send( "The bot is not playing anything at the moment." )
@@ -175,6 +205,7 @@ Ensures that, if a user is in a voice channel, the bot
 will first ensure that it joins the corresponding channel before playing.
 """
 @queue.before_invoke
+@list_queue.before_invoke
 async def ensure_voice( ctx ):
     print( "Ensuring bot is in voice channel" )
     if ctx.voice_client is None:
