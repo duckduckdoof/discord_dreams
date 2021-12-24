@@ -150,8 +150,9 @@ async def next( ctx ):
 """
 Sets the queue to loop songs
 """
-@bot.command( name='loop' help='Toggles loop queue' )
-asnc def loop( ctx ):
+@bot.command( name='loop', help='Toggles loop queue' )
+async def loop( ctx ):
+    global loop_queue
     loop_queue = not loop_queue
     if loop_queue:
         await ctx.send( "Loop queue enabled" )
