@@ -14,7 +14,7 @@ Use the following to create a new conda environment and install the dependencies
 
 ## Creating the Bot
 
-Before running this code, you must ensure you have a bot created on the discord developer dashboard, and give the new bot appropriate permissions. See (this article)[https://medium.com/disbots/how-to-make-a-discord-bot-with-python-e066b03bfd9] for (well-written) instructions.
+Before running this code, you must ensure you have a bot created on the discord developer dashboard, and give the new bot appropriate permissions. See [this article](https://medium.com/disbots/how-to-make-a-discord-bot-with-python-e066b03bfd9) for (well-written) instructions.
 
 ## Storing the Bot's Token
 
