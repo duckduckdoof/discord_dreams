@@ -21,11 +21,11 @@ from dotenv import load_dotenv
 from discord.ext import commands
 from prettytable import PrettyTable
 
-#-[ CONST DEFS ]-----------------------------------------------------------------------------------------------------#
+#-[ CONST DEFS ]--##---------------------------------------------------------------------------------------------------#
 
 MAX_QUEUE_SIZE = 20
 
-#-[ INIT DEFS ]------------------------------------------------------------------------------------------------------#
+#-[ INIT DEFS ]----##--------------------------------------------------------------------------------------------------#
 
 # Load bot token from environment file
 load_dotenv()
@@ -41,6 +41,7 @@ client = discord.Client( intents=intents )
 
 # Set up queue for multiple YT vids
 yt_queue = queue.Queue( maxsize=MAX_QUEUE_SIZE )
+loop_queue = False
 
 #-[ BOT DEFS ]---------------------------------------------------------------------------------------------------------#
 
@@ -69,6 +70,10 @@ def play_next( ctx ):
         server = ctx.message.guild
         voice_channel = server.voice_client
         yt_obj = yt_queue.get()
+
+        # LOOPING: if enabled, put that object back onto the queue
+        if loop_queue:
+            yt_queue.put( yt_obj )
 
         print( "Playing stream..." )
         voice_channel.play( discord.FFmpegPCMAudio( source=yt_obj.url, **ffmpeg_options ), after=lambda x: play_next( ctx ) )
@@ -118,7 +123,7 @@ async def queue( ctx, url ):
 Takes all songs in the music queue, and prints them out in order
 TODO: it may be a good idea to list who queued the song as well...
 """
-@bot.command( name='l', help='List videos in the queue' )
+@bot.command( name='list', help='List videos in the queue' )
 async def list_queue( ctx ):
     if yt_queue.empty():
         await ctx.send( "Queue is empty" )
@@ -133,7 +138,7 @@ async def list_queue( ctx ):
 """
 Makes the bot stop the current song, and queues the next song
 """
-@bot.command( name='n', help='Stops the video/song' )
+@bot.command( name='next', help='Stops the video/song' )
 async def next( ctx ):
     voice_client = ctx.message.guild.voice_client
     if voice_client.is_playing() or voice_client.is_paused():
@@ -141,6 +146,18 @@ async def next( ctx ):
         voice_client.stop()
     else:
         await ctx.send( "The bot is not playing anything at the moment." )
+
+"""
+Sets the queue to loop songs
+"""
+@bot.command( name='loop', help='Toggles loop queue' )
+async def loop( ctx ):
+    global loop_queue
+    loop_queue = not loop_queue
+    if loop_queue:
+        await ctx.send( "Loop queue enabled" )
+    else:
+        await ctx.send( "Loop queue disabled" )
 
 """
 Pauses the bot voice client.
