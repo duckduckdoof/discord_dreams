@@ -16,6 +16,7 @@ import queue
 import config_utils
 import ytdl_utils
 import discord
+import datetime
 
 from dotenv import load_dotenv
 from discord.ext import commands
@@ -24,6 +25,9 @@ from prettytable import PrettyTable
 #-[ CONST DEFS ]--##---------------------------------------------------------------------------------------------------#
 
 MAX_QUEUE_SIZE = 20
+
+# one second less than a full day, keeps formatting issues easy later (technically this is a limitation of the bot).
+MAX_TIMESTAMP = 86399
 
 #-[ INIT DEFS ]----##--------------------------------------------------------------------------------------------------#
 
@@ -81,8 +85,16 @@ def play_next( ctx ):
         if loop_queue:
             yt_queue.put( yt_obj )
 
+        timestamp = str( datetime.timedelta( seconds=( min( yt_obj.start_time or 0, MAX_TIMESTAMP ) ) ) )
+
         print( "Playing stream..." )
-        voice_channel.play( discord.FFmpegPCMAudio( source=yt_obj.url, **ffmpeg_options ), after=lambda x: play_next( ctx ) )
+        voice_channel.play(
+            discord.FFmpegPCMAudio(
+                source=yt_obj.url,
+                **ffmpeg_options,
+                before_options='-ss ' + timestamp
+            ), after=lambda x: play_next( ctx )
+        )
     except Exception as e:
         print( "Error passing context to play_next()" )
         print( e )
@@ -132,14 +144,14 @@ TODO: it may be a good idea to list who queued the song as well...
 """
 @bot.command( name='list', help='List videos in the queue' )
 async def list_queue( ctx ):
-    global now_playing 
+    global now_playing
     if now_playing == "":
         now_playing = "Nothing"
     current_str = '`' + "Now Playing: " + str(now_playing) + '`' + '\n\n'
 
     # Assemble print strings
     if yt_queue.empty():
-        table_str = "`Queue is empty`" 
+        table_str = "`Queue is empty`"
     else:
         queue_table = PrettyTable()
         queue_table.field_names = [ '', 'Queue' ]
@@ -186,7 +198,7 @@ async def pause( ctx ):
         voice_client.pause()
     else:
         await ctx.send( "The bot is not playing anything at the moment." )
-    
+
 """
 Resumes the bot voice client (if applicable).
 """
