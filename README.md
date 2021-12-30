@@ -18,7 +18,7 @@ Before running this code, you must ensure you have a bot created on the discord 
 
 ## Storing the Bot's Token
 
-Because it is mega-insecure to store the plaintext bot-token in github, you must store your token in an appropriate ```.env``` file. The discord bot will import this token on startup.
+Because it is mega-insecure to store the plaintext bot-token in github, you must store your token in an appropriate ```.env``` file. The discord bot will import this token on startup. Make sure to name the variable in the ```.env``` as ```DISCORD_BOT_TOKEN```.
 
 ## Running the Bot
 
