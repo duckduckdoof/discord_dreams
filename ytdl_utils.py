@@ -28,6 +28,12 @@ class YTStreamData:
         self.id = yt_raw_data['id']
         self.description = yt_raw_data['description']
 
+        if 'start_time' in yt_raw_data:
+            self.start_time = yt_raw_data['start_time']
+        else:
+            self.start_time = 0
+
+
 """
 Retrieves audio data from youtube URL
 """
