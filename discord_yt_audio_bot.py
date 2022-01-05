@@ -75,18 +75,18 @@ def play_next( ctx ):
     if loop_current:
         print( "Looping current song" )
         if now_playing == None:
-            now_playing = yt_queue.empty() ? None : yt_queue.get()
+            now_playing = None if yt_queue.empty() else yt_queue.get()
 
     # If we enable loop_queue, then we put the song back on the queue
     elif loop_queue:
         print( "Looping queue" )
-        now_playing = yt_queue.empty() ? None : yt_queue.get()
+        now_playing = None if yt_queue.empty() else yt_queue.get()
         yt_queue.put( now_playing )
 
     # Otherwise, we just get the next song
     else:
         print( "Grabbing next item on queue..." )
-        now_playing = yt_queue.empty() ? None : yt_queue.get()
+        now_playing = None if yt_queue.empty() else yt_queue.get()
 
     # Now play the song
     play_song( ctx, now_playing )
