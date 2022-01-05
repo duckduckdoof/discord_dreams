@@ -171,7 +171,7 @@ TODO: it may be a good idea to list who queued the song as well...
 @bot.command( name='list', aliases=['l'], help='List videos in the queue' )
 async def list_queue( ctx ):
     global now_playing
-    if now_playing == None
+    if now_playing == None:
         now_playing_str = "Nothing"
     else:
         now_playing_str = now_playing.title
