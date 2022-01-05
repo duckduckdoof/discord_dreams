@@ -180,10 +180,10 @@ async def list_queue( ctx ):
         table_str = "`Queue is empty`"
     else:
         queue_table = PrettyTable()
-        queue_table.field_names = [ '', 'Queue' ]
+        queue_table.field_names = [ 'Queue (Top is Next)' ]
         music_list = list( yt_queue.queue )
         for i, music in enumerate(music_list):
-            queue_table.add_row( [ "Up Next >>>" if i == 0 else "", music.title ] )
+            queue_table.add_row( [ music.title ] )
         table_str = '`' + queue_table.get_string() + '`'
 
     # Print out the strings
