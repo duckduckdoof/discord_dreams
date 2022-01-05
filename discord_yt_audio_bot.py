@@ -71,24 +71,22 @@ def play_next( ctx ):
         print( "Currently playing, waiting for turn..." )
         return
 
-    try:
-        # If we enable loop_current, then get the current song
-        if loop_current:
-            if now_playing == None:
-                now_playing = yt_queue.get()
+    # If we enable loop_current, then get the current song
+    if loop_current:
+        print( "Looping current song" )
+        if now_playing == None:
+            now_playing = yt_queue.empty() ? None : yt_queue.get()
 
-        # If we enable loop_queue, then we put the song back on the queue
-        elif loop_queue:
-            now_playing = yt_queue.get()
-            yt_queue.put( now_playing )
+    # If we enable loop_queue, then we put the song back on the queue
+    elif loop_queue:
+        print( "Looping queue" )
+        now_playing = yt_queue.empty() ? None : yt_queue.get()
+        yt_queue.put( now_playing )
 
-        # Otherwise, we just get the next song
-        else:
-            now_playing = yt_queue.get()
-    except queue.Empty:
-        print( "Queue is empty..." )
-        current_song = None
-        return
+    # Otherwise, we just get the next song
+    else:
+        print( "Grabbing next item on queue..." )
+        now_playing = yt_queue.empty() ? None : yt_queue.get()
 
     # Now play the song
     play_song( ctx, now_playing )
@@ -208,7 +206,7 @@ Sets the queue to loop songs
 NOTE: if we have loop_current enabled, then the bot will prioritize that first!
 """
 @bot.command( name='loop', help='Toggles loop queue' )
-async def loop( ctx ):
+async def loop_q( ctx ):
     global loop_queue
     loop_queue = not loop_queue
     if loop_queue:
@@ -221,7 +219,7 @@ Sets the queue to loop the current song
 When we loop the current song, we ignore the queue loop variable.
 """
 @bot.command( name='loopfirst', aliases=['lfirst'], help='Loops the current song being played' )
-async def loop_current( ctx ):
+async def loop_s( ctx ):
     global loop_current
     loop_current = not loop_current
     if loop_current:
