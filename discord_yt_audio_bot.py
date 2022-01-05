@@ -117,7 +117,7 @@ async def get_yt_obj_from_url( ctx, url: str ):
 """
 Adds a song the queue, and plays the first song.
 """
-@bot.command( name='q', help='Queues a YT URL for playing' )
+@bot.command( name='queue', aliases=[ 'q' ], help='Queues a YT URL for playing' )
 async def queue( ctx, url ):
 
     # Sanity check the URL
@@ -142,7 +142,7 @@ async def queue( ctx, url ):
 Takes all songs in the music queue, and prints them out in order
 TODO: it may be a good idea to list who queued the song as well...
 """
-@bot.command( name='list', help='List videos in the queue' )
+@bot.command( name='list', aliases=[ 'l' ], help='List videos in the queue' )
 async def list_queue( ctx ):
     global now_playing
     if now_playing == "":
@@ -166,7 +166,7 @@ async def list_queue( ctx ):
 """
 Makes the bot stop the current song, and queues the next song
 """
-@bot.command( name='next', help='Queues the next song' )
+@bot.command( name='next', aliases=[ 'n' ], help='Queues the next song' )
 async def next( ctx ):
     voice_client = ctx.message.guild.voice_client
     if voice_client.is_playing() or voice_client.is_paused():
@@ -190,7 +190,7 @@ async def loop( ctx ):
 """
 Pauses the bot voice client.
 """
-@bot.command( name='pause', help='Pause the video/song' )
+@bot.command( name='pause', aliases=[ 'p' ], help='Pause the video/song' )
 async def pause( ctx ):
     voice_client = ctx.message.guild.voice_client
     if voice_client.is_playing():
@@ -202,7 +202,7 @@ async def pause( ctx ):
 """
 Resumes the bot voice client (if applicable).
 """
-@bot.command( name='resume', help='Resumes the video/song' )
+@bot.command( name='resume', aliases=[ 'r' ], help='Resumes the video/song' )
 async def resume( ctx ):
     voice_client = ctx.message.guild.voice_client
     if voice_client.is_paused():
@@ -214,7 +214,7 @@ async def resume( ctx ):
 """
 Makes the bot stop the current song, and clears the queue
 """
-@bot.command( name='clear', help='Stops the video/song' )
+@bot.command( name='clear', aliases=[ 'c' ], help='Stops the video/song' )
 async def clear( ctx ):
     voice_client = ctx.message.guild.voice_client
     if voice_client.is_playing():
