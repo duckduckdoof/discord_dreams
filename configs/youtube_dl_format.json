@@ -1,6 +1,6 @@
 {
     "extract_audio": true,
-    "format": "bestaudio/best",
+    "format": "bestaudio",
     "outtmpl": "%(extractor)s-%(id)s-%(title)s.%(ext)s",
     "restrictfilenames": true,
     "noplaylist": true,
@@ -12,5 +12,6 @@
     "no_warnings": true,
     "default_search": "auto",
     "force_ipv4": true,
-    "source_address": "0.0.0.0"
+    "source_address": "0.0.0.0",
+    "rm_cache_dir": true
 }
