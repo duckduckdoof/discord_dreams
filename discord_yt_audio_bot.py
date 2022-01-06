@@ -20,7 +20,6 @@ import datetime
 
 from dotenv import load_dotenv
 from discord.ext import commands
-from prettytable import PrettyTable
 
 #-[ CONST DEFS ]-------------------------------------------------------------------------------------------------------#
 
@@ -168,26 +167,30 @@ TODO: it may be a good idea to list who queued the song as well...
 """
 @bot.command( name='list', aliases=['l'], help='List videos in the queue' )
 async def list_queue( ctx ):
+
+    # Get the current song (if applicable)
     global now_playing
     if now_playing == None:
         now_playing_str = "Nothing"
     else:
         now_playing_str = now_playing.title
-    current_str = '`' + "Now Playing: " + str(now_playing_str) + '`' + '\n\n'
 
-    # Assemble print strings
+    # Get the list of songs on the queue (if not empty)
     if yt_queue.empty():
-        table_str = "`Queue is empty`"
+        queue_val = "There are no songs on the queue!"
     else:
-        queue_table = PrettyTable()
-        queue_table.field_names = [ 'Queue (Top is Next)' ]
-        music_list = list( yt_queue.queue )
-        for i, music in enumerate(music_list):
-            queue_table.add_row( [ music.title ] )
-        table_str = '`' + queue_table.get_string() + '`'
+        yt_queue_list = list( yt_queue.queue )
+        queue_val = []
+        for item in yt_queue_list:
+            queue_val.append( item.title )
 
-    # Print out the strings
-    await ctx.send( current_str + table_str )
+    # Create the embed for the queue, and send it
+    list_embed = discord.Embed( title="Music Queue", colour=0xEC6541 )
+    list_embed.set_author( name="MansleyMusic Bot", icon_url=bot.user.avatar_url )
+    list_embed.add_field( name="Queue", value=queue_val )
+    list_embed.add_field( name="Now Playing", value=now_playing_str )
+
+    await ctx.send( embed=list_embed )
 
 """
 Makes the bot stop the current song, and queues the next song
