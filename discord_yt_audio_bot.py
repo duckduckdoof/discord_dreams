@@ -173,8 +173,15 @@ TODO: it may be a good idea to list who queued the song as well...
 @bot.command( name='list', aliases=['l'], help='List videos in the queue' )
 async def list_queue( ctx ):
 
-    # Get the current song (if applicable)
     global now_playing
+    global loop_queue
+    global loop_current
+
+    # Extra information: include if we're looping
+    now_playing_title = "Now Playing (on repeat): " if loop_current else "Now Playing:"
+    queue_title = "Music Queue (on loop)" if loop_queue else "Music Queue"
+
+    # Get the current song (if applicable)
     if now_playing == None:
         now_playing_str = "Nothing"
     else:
@@ -191,10 +198,10 @@ async def list_queue( ctx ):
         queue_val += str(len(yt_queue_list)) + ":\t" + yt_queue_list[-1].title
 
     # Create the embed for the queue, and send it
-    list_embed = discord.Embed( title="Music Queue", colour=0xEC6541 )
+    list_embed = discord.Embed( title=queue_title, colour=0xEC6541 )
     list_embed.set_author( name=ctx.message.author.display_name, icon_url=ctx.message.author.avatar_url )
     list_embed.add_field( name="Up Next:", value=queue_val, inline=False )
-    list_embed.add_field( name="Now Playing:", value=now_playing_str, inline=False )
+    list_embed.add_field( name=now_playing_title, value=now_playing_str, inline=False )
 
     await ctx.send( embed=list_embed )
 
