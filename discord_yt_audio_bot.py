@@ -105,6 +105,11 @@ def play_song( ctx, current_song ):
         server = ctx.message.guild
         voice_channel = server.voice_client
 
+        # If we're not in a voice channel, leave
+        if voice_channel == None:
+            print( "We're not in a voice channel, stopping..." )
+            return
+
         min_seconds = ( min( current_song.start_time or 0, MAX_TIMESTAMP ) )
         timestamp = str( datetime.timedelta( seconds=min_seconds ) )
 
@@ -180,15 +185,16 @@ async def list_queue( ctx ):
         queue_val = "There are no songs on the queue!"
     else:
         yt_queue_list = list( yt_queue.queue )
-        queue_val = []
-        for item in yt_queue_list:
-            queue_val.append( item.title )
+        queue_val = ""
+        for i in range( 0, len(yt_queue_list) - 1 ):
+            queue_val += str(i+1) + ":\t" + yt_queue_list[i].title + "\n"
+        queue_val += str(len(yt_queue_list)) + ":\t" + yt_queue_list[-1].title
 
     # Create the embed for the queue, and send it
     list_embed = discord.Embed( title="Music Queue", colour=0xEC6541 )
-    list_embed.set_author( name="MansleyMusic Bot", icon_url=bot.user.avatar_url )
-    list_embed.add_field( name="Queue", value=queue_val )
-    list_embed.add_field( name="Now Playing", value=now_playing_str )
+    list_embed.set_author( name=ctx.message.author.display_name, icon_url=ctx.message.author.avatar_url )
+    list_embed.add_field( name="Up Next:", value=queue_val, inline=False )
+    list_embed.add_field( name="Now Playing:", value=now_playing_str, inline=False )
 
     await ctx.send( embed=list_embed )
 
