@@ -65,6 +65,15 @@ def play_next( ctx ):
     global loop_queue
     global loop_current
 
+    # Check if the voice channel is still active
+    server = ctx.message.guild
+    voice_channel = server.voice_client
+
+    # If we're not in a voice channel, leave
+    if voice_channel == None:
+        print( "We're not in a voice channel, stopping..." )
+        return
+
     # If we're already playing something, wait for the lambda function to trigger the next song
     if ctx.voice_client.is_playing():
         print( "Currently playing, waiting for turn..." )
@@ -84,16 +93,16 @@ def play_next( ctx ):
 
     # Otherwise, we just get the next song
     else:
-        print( "Grabbing next item on queue..." )
+        print( "Grabbing next item in queue..." )
         now_playing = None if yt_queue.empty() else yt_queue.get()
 
     # Now play the song
-    play_song( ctx, now_playing )
+    play_song( ctx, voice_channel, now_playing )
 
 """
 Plays the song passed as an argument to this function
 """
-def play_song( ctx, current_song ):
+def play_song( ctx, voice_channel, current_song ):
 
     # Check if the song is not empty
     if current_song == None:
@@ -102,13 +111,6 @@ def play_song( ctx, current_song ):
 
     # Obtain the appropriate voice channel, then stream the video
     try:
-        server = ctx.message.guild
-        voice_channel = server.voice_client
-
-        # If we're not in a voice channel, leave
-        if voice_channel == None:
-            print( "We're not in a voice channel, stopping..." )
-            return
 
         min_seconds = ( min( current_song.start_time or 0, MAX_TIMESTAMP ) )
         timestamp = str( datetime.timedelta( seconds=min_seconds ) )
@@ -189,18 +191,17 @@ async def list_queue( ctx ):
 
     # Get the list of songs on the queue (if not empty)
     if yt_queue.empty():
-        queue_val = "There are no songs on the queue!"
+        queue_val = "There are no songs in the queue!"
     else:
         yt_queue_list = list( yt_queue.queue )
-        queue_val = ""
-        for i in range( 0, len(yt_queue_list) - 1 ):
-            queue_val += str(i+1) + ":\t" + yt_queue_list[i].title + "\n"
-        queue_val += str(len(yt_queue_list)) + ":\t" + yt_queue_list[-1].title
+        yt_titles_list = [ yt.title for yt in yt_queue_list ]
+        queue_list = [ f"{i+1}:\t {song}" for i, song in enumerate( yt_titles_list ) ]
+        queue_str = '\n'.join( queue_list )
 
     # Create the embed for the queue, and send it
     list_embed = discord.Embed( title=queue_title, colour=0xEC6541 )
     list_embed.set_author( name=ctx.message.author.display_name, icon_url=ctx.message.author.avatar_url )
-    list_embed.add_field( name="Up Next:", value=queue_val, inline=False )
+    list_embed.add_field( name="Up Next:", value=queue_str, inline=False )
     list_embed.add_field( name=now_playing_title, value=now_playing_str, inline=False )
 
     await ctx.send( embed=list_embed )
