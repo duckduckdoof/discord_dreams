@@ -34,7 +34,7 @@ bot = commands.Bot( command_prefix="m!", intents=intents,
                    description='Mansley Music LTD' )
 
 # Add the Music Cog
-bot.load_extension( "music_commands" )
+bot.load_extension( "musiccommands" )
 
 # Run the bot
 bot.run( bot_token )

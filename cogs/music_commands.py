@@ -33,7 +33,7 @@ This Cog is responsible for queueing music and playing via FFMpegPCMAudio.
 Additionally, all functions related to queueing music (i.e. - pausing, going next, toggle looping)
 are included in this Cog.
 """
-class MusicCog( commands.Cog ):
+class MusicCommands( commands.Cog ):
 
     """
     Constructor for the Cog
