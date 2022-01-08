@@ -324,6 +324,6 @@ class MusicCommands( commands.Cog ):
 This function is required from discord so that the cog can be loaded
 """
 def setup( bot: commands.Bot ):
-    bot.add_cog( MusicCog( bot ) )
+    bot.add_cog( MusicCommands( bot ) )
 
 #-[ END ]--------------------------------------------------------------------------------------------------------------#

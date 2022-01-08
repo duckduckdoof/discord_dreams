@@ -1,6 +1,6 @@
 #----------------------------------------------------------------------------------------------------------------------#
 #
-# discord_yt_audio_bot.py
+# mister_mansely_bot.py
 #
 # This bot is a basic YT player with added functionality for queueing songs
 # and other queueing-based logic and features.
@@ -34,7 +34,7 @@ bot = commands.Bot( command_prefix="m!", intents=intents,
                    description='Mansley Music LTD' )
 
 # Add the Music Cog
-bot.load_extension( "musiccommands" )
+bot.load_extension( "cogs.music_commands" )
 
 # Run the bot
 bot.run( bot_token )
