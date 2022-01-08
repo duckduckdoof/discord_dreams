@@ -20,7 +20,6 @@ import datetime
 
 from dotenv import load_dotenv
 from discord.ext import commands
-from prettytable import PrettyTable
 
 #-[ CONST DEFS ]-------------------------------------------------------------------------------------------------------#
 
@@ -66,6 +65,15 @@ def play_next( ctx ):
     global loop_queue
     global loop_current
 
+    # Check if the voice channel is still active
+    server = ctx.message.guild
+    voice_channel = server.voice_client
+
+    # If we're not in a voice channel, leave
+    if voice_channel == None:
+        print( "We're not in a voice channel, stopping..." )
+        return
+
     # If we're already playing something, wait for the lambda function to trigger the next song
     if ctx.voice_client.is_playing():
         print( "Currently playing, waiting for turn..." )
@@ -85,16 +93,16 @@ def play_next( ctx ):
 
     # Otherwise, we just get the next song
     else:
-        print( "Grabbing next item on queue..." )
+        print( "Grabbing next item in queue..." )
         now_playing = None if yt_queue.empty() else yt_queue.get()
 
     # Now play the song
-    play_song( ctx, now_playing )
+    play_song( ctx, voice_channel, now_playing )
 
 """
 Plays the song passed as an argument to this function
 """
-def play_song( ctx, current_song ):
+def play_song( ctx, voice_channel, current_song ):
 
     # Check if the song is not empty
     if current_song == None:
@@ -103,8 +111,6 @@ def play_song( ctx, current_song ):
 
     # Obtain the appropriate voice channel, then stream the video
     try:
-        server = ctx.message.guild
-        voice_channel = server.voice_client
 
         min_seconds = ( min( current_song.start_time or 0, MAX_TIMESTAMP ) )
         timestamp = str( datetime.timedelta( seconds=min_seconds ) )
@@ -168,26 +174,37 @@ TODO: it may be a good idea to list who queued the song as well...
 """
 @bot.command( name='list', aliases=['l'], help='List videos in the queue' )
 async def list_queue( ctx ):
+
     global now_playing
+    global loop_queue
+    global loop_current
+
+    # Extra information: include if we're looping
+    now_playing_title = "Now Playing (on repeat): " if loop_current else "Now Playing:"
+    queue_title = "Music Queue (on loop)" if loop_queue else "Music Queue"
+
+    # Get the current song (if applicable)
     if now_playing == None:
         now_playing_str = "Nothing"
     else:
         now_playing_str = now_playing.title
-    current_str = '`' + "Now Playing: " + str(now_playing_str) + '`' + '\n\n'
 
-    # Assemble print strings
+    # Get the list of songs on the queue (if not empty)
     if yt_queue.empty():
-        table_str = "`Queue is empty`"
+        queue_val = "There are no songs in the queue!"
     else:
-        queue_table = PrettyTable()
-        queue_table.field_names = [ 'Queue (Top is Next)' ]
-        music_list = list( yt_queue.queue )
-        for i, music in enumerate(music_list):
-            queue_table.add_row( [ music.title ] )
-        table_str = '`' + queue_table.get_string() + '`'
+        yt_queue_list = list( yt_queue.queue )
+        yt_titles_list = [ yt.title for yt in yt_queue_list ]
+        queue_list = [ f"{i+1}:\t {song}" for i, song in enumerate( yt_titles_list ) ]
+        queue_str = '\n'.join( queue_list )
 
-    # Print out the strings
-    await ctx.send( current_str + table_str )
+    # Create the embed for the queue, and send it
+    list_embed = discord.Embed( title=queue_title, colour=0xEC6541 )
+    list_embed.set_author( name=ctx.message.author.display_name, icon_url=ctx.message.author.avatar_url )
+    list_embed.add_field( name="Up Next:", value=queue_str, inline=False )
+    list_embed.add_field( name=now_playing_title, value=now_playing_str, inline=False )
+
+    await ctx.send( embed=list_embed )
 
 """
 Makes the bot stop the current song, and queues the next song
