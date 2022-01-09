@@ -78,21 +78,21 @@ class MusicCommands( commands.Cog ):
         if self.loop_current:
             print( "Looping current song" )
             if self.now_playing == None:
-                now_playing = None if self.yt_queue.empty() else self.yt_queue.get()
+                self.now_playing = None if self.yt_queue.empty() else self.yt_queue.get()
 
         # If we enable loop_queue, then we put the song back on the queue
         elif self.loop_queue:
             print( "Looping queue" )
-            now_playing = None if self.yt_queue.empty() else self.yt_queue.get()
-            self.yt_queue.put( now_playing )
+            self.now_playing = None if self.yt_queue.empty() else self.yt_queue.get()
+            self.yt_queue.put( self.now_playing )
 
         # Otherwise, we just get the next song
         else:
             print( "Grabbing next item in queue..." )
-            now_playing = None if self.yt_queue.empty() else self.yt_queue.get()
+            self.now_playing = None if self.yt_queue.empty() else self.yt_queue.get()
 
         # Now play the song
-        self.play_song( ctx, voice_channel, now_playing )
+        self.play_song( ctx, voice_channel, self.now_playing )
 
     """
     Plays the song passed as an argument to this function
@@ -182,7 +182,7 @@ class MusicCommands( commands.Cog ):
 
         # Get the list of songs on the queue (if not empty)
         if self.yt_queue.empty():
-            queue_val = "There are no songs in the queue!"
+            queue_str = "There are no songs in the queue!"
         else:
             yt_queue_list = list( self.yt_queue.queue )
             yt_titles_list = [ yt.title for yt in yt_queue_list ]
@@ -303,6 +303,10 @@ class MusicCommands( commands.Cog ):
     """
     @queue.before_invoke
     @list_queue.before_invoke
+    @next.before_invoke
+    @pause.before_invoke
+    @resume.before_invoke
+    @clear.before_invoke
     async def ensure_voice( self, ctx ):
         print( "Ensuring bot is in voice channel" )
         if ctx.voice_client is None:
